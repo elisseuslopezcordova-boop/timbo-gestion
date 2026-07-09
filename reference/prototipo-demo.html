@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<title>Timbó · Gestión</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js" crossorigin></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js" crossorigin></script>
+<style>
+  html, body { margin: 0; padding: 0; background: #F3ECE1; }
+  #root { min-height: 100vh; }
+  #boot { min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: ui-sans-serif, system-ui, sans-serif; color: #897A69; }
+
+  .timbo-app{
+    --ink:#2A201A; --espresso:#352519; --tan:#B0703B; --tan-deep:#8F5728; --tan-tint:#F0E4D5;
+    --cream:#F3ECE1; --paper:#FFFFFF; --paper2:#FBF6EF; --line:#E7DCCB; --muted:#897A69;
+    --green:#2E7A52; --green-tint:#E4F0E9; --red:#B23A48; --red-tint:#F7E6E8;
+    --warn-tint:#F6ECD4; --warn-ink:#8A6A1F;
+    font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--cream); -webkit-font-smoothing:antialiased;
+  }
+  .timbo-app *{box-sizing:border-box;}
+  .timbo-app h1,.timbo-app h2,.timbo-app h3,.timbo-app p{margin:0;}
+  .t-serif{font-family:'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;}
+  .t-num{font-variant-numeric:tabular-nums;}
+
+  .t-shell{display:flex;min-height:100vh;}
+  .t-sidebar{width:248px;flex-shrink:0;background:var(--espresso);color:#EFE6D9;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:22px 16px;}
+  .t-brand{display:flex;flex-direction:column;gap:2px;padding:6px 10px 20px;}
+  .t-brand-name{font-size:26px;font-weight:600;color:#fff;letter-spacing:.01em;}
+  .t-brand-sub{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#B6A48E;}
+  .t-nav{display:flex;flex-direction:column;gap:4px;}
+  .t-nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:#D6C9B7;font-size:14px;font-weight:500;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:.15s;}
+  .t-nav-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+  .t-nav-item.active{background:var(--tan);color:#fff;}
+  .t-side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1);}
+
+  .t-main{flex:1;min-width:0;}
+  .t-content{padding:30px 34px 56px;max-width:1180px;margin:0 auto;}
+  .t-topbar,.t-bottomnav{display:none;}
+
+  .t-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px;}
+  .t-page-title{font-size:24px;font-weight:600;}
+  .t-page-sub{font-size:13.5px;color:var(--muted);margin-top:3px;}
+
+  .t-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;}
+  .t-card.flat{background:var(--paper2);}
+  .t-card-title{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;}
+
+  .stack-lg>*+*{margin-top:22px;} .stack-md>*+*{margin-top:16px;} .stack-sm>*+*{margin-top:10px;}
+  .t-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .t-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+  .t-row{display:flex;align-items:center;gap:10px;} .t-wrap{flex-wrap:wrap;}
+
+  .t-btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:10px 15px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;transition:.15s;font-family:inherit;}
+  .t-btn:hover{background:var(--tan-tint);}
+  .t-btn-primary{background:var(--tan);border-color:var(--tan-deep);color:#FFF8EF;}
+  .t-btn-primary:hover{background:var(--tan-deep);}
+  .t-btn-sm{padding:7px 11px;font-size:13px;}
+  .t-btn-danger{color:var(--red);border-color:#E7C9CD;background:#fff;}
+  .t-btn-danger:hover{background:var(--red-tint);}
+  .t-icon-btn{padding:7px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--muted);display:inline-flex;transition:.15s;}
+  .t-icon-btn:hover{color:var(--ink);background:var(--tan-tint);}
+  .t-icon-btn.danger:hover{color:var(--red);background:var(--red-tint);}
+
+  .t-month-nav{display:flex;align-items:center;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px;}
+  .t-month-nav .lbl{min-width:118px;text-align:center;font-weight:600;font-size:14px;}
+
+  .t-field{display:flex;flex-direction:column;gap:6px;}
+  .t-label{font-size:11.5px;font-weight:700;letter-spacing:.03em;color:var(--muted);text-transform:uppercase;}
+  .t-input,.t-select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff;color:var(--ink);font-family:inherit;}
+  .t-input:focus,.t-select:focus{outline:2px solid #DEBE92;border-color:var(--tan);}
+
+  .t-pill{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+  .t-pill-green{background:var(--green-tint);color:var(--green);}
+  .t-pill-red{background:var(--red-tint);color:var(--red);}
+  .t-pill-warn{background:var(--warn-tint);color:var(--warn-ink);}
+  .t-pill-neutral{background:#EFE7DA;color:var(--muted);}
+
+  .t-table-wrap{overflow-x:auto;}
+  .t-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .t-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .t-table td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .t-table tbody tr:last-child td{border-bottom:none;}
+  .t-table tbody tr:hover{background:var(--paper2);}
+  .t-right{text-align:right;}
+
+  .t-empty{text-align:center;padding:38px 16px;color:var(--muted);font-size:14px;}
+
+  .t-overlay{position:fixed;inset:0;background:rgba(33,24,16,.45);display:flex;align-items:flex-start;justify-content:center;padding:24px;z-index:50;overflow-y:auto;}
+  .t-modal{background:var(--paper);border-radius:16px;width:100%;max-width:540px;padding:24px;margin:24px 0;border:1px solid var(--line);box-shadow:0 22px 60px rgba(33,24,16,.28);}
+  .t-modal.sm{max-width:420px;}
+  .t-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .t-modal-title{font-size:19px;font-weight:600;}
+
+  .t-toggle{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .t-toggle button{flex:1;padding:10px;font-size:14px;font-weight:600;border:none;background:#fff;color:var(--muted);cursor:pointer;font-family:inherit;}
+  .t-toggle button.on-in{background:var(--green-tint);color:var(--green);}
+  .t-toggle button.on-eg{background:var(--red-tint);color:var(--red);}
+
+  .t-toast{position:fixed;top:20px;right:20px;background:var(--espresso);color:#fff;padding:12px 16px;border-radius:10px;font-size:14px;z-index:60;display:flex;gap:8px;align-items:center;box-shadow:0 12px 34px rgba(0,0,0,.25);}
+
+  .t-hero{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:26px 28px;position:relative;overflow:hidden;}
+  .t-hero-eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+  .t-hero-num{font-size:54px;line-height:1.04;font-weight:600;margin-top:6px;}
+  .t-hero-verdict{font-size:15px;font-weight:600;margin-top:6px;}
+  .t-hero-split{display:flex;gap:30px;margin-top:22px;padding-top:20px;border-top:1px solid var(--line);flex-wrap:wrap;}
+  .t-hero-stat .k{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+  .t-hero-stat .v{font-size:21px;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:6px;}
+
+  .t-kpi .k{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+  .t-kpi .v{font-size:24px;font-weight:600;margin-top:6px;}
+  .t-chart{height:264px;width:100%;}
+  .t-alert{display:flex;gap:12px;align-items:flex-start;background:var(--warn-tint);border:1px solid #E8D6A8;border-radius:12px;padding:14px 16px;color:var(--warn-ink);}
+
+  @media (max-width:860px){
+    .t-sidebar{display:none;}
+    .t-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--espresso);color:#fff;position:sticky;top:0;z-index:30;}
+    .t-topbar .t-brand-name{font-size:20px;}
+    .t-bottomnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--espresso);z-index:40;padding:6px 4px;justify-content:space-around;}
+    .t-bottomnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:#B6A48E;font-size:10.5px;font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;}
+    .t-bottomnav button.active{color:#fff;}
+    .t-content{padding:18px 16px 90px;}
+    .t-grid-3,.t-grid-2{grid-template-columns:1fr;}
+    .t-hero-num{font-size:40px;}
+    .t-page-title{font-size:21px;}
+  }
+</style>
+</head>
+<body>
+<div id="boot">Cargando Timbó Gestión…</div>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+const { ResponsiveContainer, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine } = Recharts;
+
+/* ----------------------- Iconos (SVG inline) ----------------------- */
+function Ic(props) {
+  const size = props.size || 18;
+  const a = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
+  const P = {
+    dashboard: <g><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></g>,
+    report: <g><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></g>,
+    swap: <g><path d="M7 4 L3 8 L7 12"/><path d="M3 8 H21"/><path d="M17 20 L21 16 L17 12"/><path d="M21 16 H3"/></g>,
+    box: <g><path d="M21 8 L12 3 L3 8 v8 l9 5 9-5z"/><path d="M3 8 l9 5 9-5"/><path d="M12 13 v8"/></g>,
+    tag: <g><path d="M20 12 l-8 8 -9-9 V3 h8z"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" stroke="none"/></g>,
+    plus: <g><path d="M12 5v14M5 12h14"/></g>,
+    up: <g><path d="M3 17 L9 11 L13 15 L21 7"/><path d="M15 7h6v6"/></g>,
+    down: <g><path d="M3 7 L9 13 L13 9 L21 17"/><path d="M15 17h6v-6"/></g>,
+    alert: <g><path d="M12 3 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17.5" r="0.9" fill="currentColor" stroke="none"/></g>,
+    edit: <g><path d="M12 20h9"/><path d="M16.5 3.5 a2.1 2.1 0 0 1 3 3 L7 19 l-4 1 1-4z"/></g>,
+    trash: <g><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6M14 11v6"/></g>,
+    x: <g><path d="M18 6 L6 18 M6 6 l12 12"/></g>,
+    chevL: <g><path d="M15 6 l-6 6 6 6"/></g>,
+    chevR: <g><path d="M9 6 l6 6 -6 6"/></g>,
+    dl: <g><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></g>,
+    ul: <g><path d="M12 21V9"/><path d="M7 14l5-5 5 5"/><path d="M4 3h16"/></g>,
+    search: <g><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></g>,
+    check: <g><path d="M5 12l4 4 10-10"/></g>,
+  };
+  return <svg {...a}>{P[props.name]}</svg>;
+}
+
+/* ----------------------- Constantes ----------------------- */
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const MESES_COR = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const CAT_PRODUCTO = ["Materas","Mates","Yerberos","Carteras","Bolsos","Bombillas","Combos","Otros"];
+const CATS_INGRESO = ["Venta minorista","Venta mayorista","Merch corporativo B2B","Otro"];
+const CATS_EGRESO = ["Costo de producción / insumos","Sueldos","Marketing/Publicidad","Envíos","Comisiones plataforma","Impuestos","Gastos fijos","Otro"];
+const MOTIVOS_MOV = { entrada: ["Producción","Compra","Ajuste"], salida: ["Venta","Ajuste","Merma"] };
+const PIE_COLORS = ["#95592C","#B0703B","#C99466","#6E4A2E","#D8B58A","#8A6A1F","#A9853F","#7A5230"];
+const STORAGE_KEY = "timbo:appdata:v1";
+
+/* ----------------------- Helpers ----------------------- */
+const arsFmt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatARS = (n) => arsFmt.format(Number(n) || 0);
+const formatSigned = (n) => (Number(n) >= 0 ? "+ " : "- ") + formatARS(Math.abs(Number(n) || 0));
+function formatCompact(n) {
+  const v = Number(n) || 0; const a = Math.abs(v);
+  if (a >= 1e6) return "$" + (v / 1e6).toFixed(1).replace(".", ",") + "M";
+  if (a >= 1e3) return "$" + Math.round(v / 1e3) + "k";
+  return "$" + v;
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+const monthOf = (f) => (f || "").slice(0, 7);
+function monthLabel(k) { const p = k.split("-"); return MESES[Number(p[1]) - 1] + " " + p[0]; }
+function monthShort(k) { const p = k.split("-"); return MESES_COR[Number(p[1]) - 1] + " " + String(p[0]).slice(2); }
+function shiftMonth(k, delta) {
+  const p = k.split("-").map(Number);
+  const idx = p[0] * 12 + (p[1] - 1) + delta;
+  const ny = Math.floor(idx / 12); const nm = (idx % 12) + 1;
+  return ny + "-" + String(nm).padStart(2, "0");
+}
+function uid() {
+  try { if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID(); } catch (e) {}
+  return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+}
+function loadData() { try { const r = localStorage.getItem(STORAGE_KEY); if (r) return JSON.parse(r); } catch (e) {} return null; }
+function saveData(d) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (e) {} }
+
+/* ----------------------- Datos de ejemplo (catálogo real de timbo9.mitiendanube.com) ----------------------- */
+function seedData() {
+  const productos = [
+    { id: "p1", nombre: "Matera Timbó Chocolate, Solapa", categoria: "Materas", sku: "MAT-CHO-SOL", precioVenta: 187500, costoProduccion: 96000, umbralStockBajo: 3 },
+    { id: "p2", nombre: "Cartera de Cuero Timbó", categoria: "Carteras", sku: "CAR-01", precioVenta: 163000, costoProduccion: 84000, umbralStockBajo: 6 },
+    { id: "p3", nombre: "Matera Timbó Gris Oscuro, Solapa", categoria: "Materas", sku: "MAT-GRIS-SOL", precioVenta: 187500, costoProduccion: 96000, umbralStockBajo: 3 },
+    { id: "p4", nombre: "Matera Morral Timbó, Hebilla Frontal (Cuero Blando Suela)", categoria: "Materas", sku: "MAT-SUELA-HEB", precioVenta: 187500, costoProduccion: 98000, umbralStockBajo: 3 },
+    { id: "p5", nombre: "Yerbero de Gamuza 500 gr", categoria: "Yerberos", sku: "YER-500", precioVenta: 21600, costoProduccion: 9500, umbralStockBajo: 8 },
+    { id: "p6", nombre: "Yerbero Marrón de Gamuza 250 gr", categoria: "Yerberos", sku: "YER-250", precioVenta: 17300, costoProduccion: 7800, umbralStockBajo: 8 },
+    { id: "p7", nombre: "Mate Criollo", categoria: "Mates", sku: "MATE-CRI", precioVenta: 28200, costoProduccion: 12000, umbralStockBajo: 6 },
+    { id: "p8", nombre: "Mate Madera Algarrobo, Virola de Alpaca", categoria: "Mates", sku: "MATE-ALG-ALP", precioVenta: 54000, costoProduccion: 23000, umbralStockBajo: 4 },
+  ];
+  const m = (pid, tipo, cant, fecha, motivo) => ({ id: uid(), productoId: pid, tipo, cantidad: cant, fecha, motivo, nota: "" });
+  const movimientos = [
+    m("p1","entrada",8,"2026-05-01","Producción"), m("p2","entrada",4,"2026-05-01","Producción"),
+    m("p3","entrada",8,"2026-05-01","Producción"), m("p4","entrada",6,"2026-05-01","Producción"),
+    m("p5","entrada",15,"2026-05-01","Producción"), m("p6","entrada",15,"2026-05-01","Producción"),
+    m("p7","entrada",20,"2026-05-01","Producción"), m("p8","entrada",10,"2026-05-01","Producción"),
+    m("p1","salida",2,"2026-05-06","Venta"), m("p2","salida",1,"2026-05-11","Venta"),
+    m("p5","salida",3,"2026-05-14","Venta"), m("p7","salida",2,"2026-05-19","Venta"),
+    m("p3","salida",1,"2026-05-23","Venta"),
+    m("p1","entrada",4,"2026-06-01","Producción"), m("p4","entrada",4,"2026-06-01","Producción"),
+    m("p6","entrada",10,"2026-06-01","Producción"), m("p8","entrada",6,"2026-06-01","Producción"),
+    m("p1","salida",1,"2026-06-04","Venta"), m("p3","salida",2,"2026-06-08","Venta"),
+    m("p2","salida",2,"2026-06-13","Venta"), m("p6","salida",4,"2026-06-17","Venta"),
+    m("p8","salida",1,"2026-06-22","Venta"), m("p7","salida",3,"2026-06-27","Venta"),
+    m("p2","entrada",2,"2026-07-01","Producción"), m("p5","entrada",8,"2026-07-01","Producción"),
+    m("p4","salida",1,"2026-07-03","Venta"), m("p7","salida",2,"2026-07-06","Venta"),
+    m("p2","salida",1,"2026-07-07","Venta"), m("p5","salida",2,"2026-07-08","Venta"),
+  ];
+  const t = (fecha, tipo, monto, categoria, descripcion) => ({ id: uid(), fecha, tipo, monto, categoria, descripcion, vinculados: [] });
+  const transacciones = [
+    t("2026-05-01","egreso",130000,"Gastos fijos","Alquiler taller"),
+    t("2026-05-03","egreso",95000,"Costo de producción / insumos","Cuero y herrajes - lote mayo"),
+    t("2026-05-06","ingreso",375000,"Venta minorista","2 Materas Chocolate Solapa"),
+    t("2026-05-11","ingreso",163000,"Venta minorista","Cartera de Cuero Timbó"),
+    t("2026-05-14","ingreso",64800,"Venta minorista","3 Yerberos de Gamuza 500gr"),
+    t("2026-05-16","egreso",28000,"Marketing/Publicidad","Meta Ads mayo"),
+    t("2026-05-19","ingreso",56400,"Venta minorista","2 Mates Criollo"),
+    t("2026-05-20","egreso",16000,"Envíos","Correo Argentino"),
+    t("2026-05-23","ingreso",187500,"Venta minorista","Matera Gris Oscuro Solapa"),
+    t("2026-05-27","egreso",10500,"Comisiones plataforma","Tienda Nube / Pago Nube"),
+    t("2026-05-30","egreso",210000,"Sueldos","Producción - mayo"),
+    t("2026-06-01","egreso",130000,"Gastos fijos","Alquiler taller"),
+    t("2026-06-04","ingreso",187500,"Venta minorista","Matera Chocolate Solapa"),
+    t("2026-06-05","egreso",160000,"Costo de producción / insumos","Compra de cuero - lote junio"),
+    t("2026-06-08","ingreso",375000,"Venta minorista","2 Materas Gris Oscuro Solapa"),
+    t("2026-06-10","egreso",35000,"Marketing/Publicidad","Campaña Instagram"),
+    t("2026-06-13","ingreso",326000,"Venta mayorista","2 Carteras de Cuero - mayorista"),
+    t("2026-06-17","ingreso",69200,"Venta minorista","4 Yerberos Marrón 250gr"),
+    t("2026-06-19","egreso",14000,"Envíos","Andreani"),
+    t("2026-06-22","ingreso",17300,"Venta minorista","Yerbero Marrón 250gr"),
+    t("2026-06-27","ingreso",84600,"Venta minorista","3 Mates Criollo"),
+    t("2026-06-28","egreso",11500,"Comisiones plataforma","Pago Nube"),
+    t("2026-06-30","egreso",210000,"Sueldos","Producción - junio"),
+    t("2026-07-01","egreso",130000,"Gastos fijos","Alquiler taller"),
+    t("2026-07-03","ingreso",187500,"Venta minorista","Matera Morral Hebilla Frontal"),
+    t("2026-07-04","egreso",70000,"Costo de producción / insumos","Insumos varios"),
+    t("2026-07-06","ingreso",56400,"Venta minorista","2 Mates Criollo"),
+    t("2026-07-07","ingreso",163000,"Venta minorista","Cartera de Cuero Timbó"),
+    t("2026-07-08","ingreso",43200,"Venta minorista","2 Yerberos de Gamuza 500gr"),
+  ];
+  return { productos, movimientos, transacciones };
+}
+function loadOrSeed() { const d = loadData(); if (d) return d; const s = seedData(); saveData(s); return s; }
+
+/* ----------------------- App ----------------------- */
+function App() {
+  const [data, setData] = useState(loadOrSeed);
+  const [view, setView] = useState("dashboard");
+  const [selMonth, setSelMonth] = useState(null);
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState("");
+  const [fDesde, setFDesde] = useState("");
+  const [fHasta, setFHasta] = useState("");
+  const [fTipo, setFTipo] = useState("todos");
+  const [fCat, setFCat] = useState("todas");
+  const [fBusca, setFBusca] = useState("");
+  const [catFiltro, setCatFiltro] = useState("todas");
+
+  useEffect(() => {
+    const mx = data.transacciones.reduce((a, t) => (monthOf(t.fecha) > a ? monthOf(t.fecha) : a), monthOf(todayStr()));
+    setSelMonth(mx);
+  }, []);
+
+  function persist(next) { setData(next); saveData(next); }
+  function ping(msg) { setToast(msg); setTimeout(() => setToast(""), 2400); }
+
+  const stockOf = useMemo(() => (pid) => data.movimientos.reduce((s, m) => (m.productoId !== pid ? s : s + (m.tipo === "entrada" ? Number(m.cantidad) : -Number(m.cantidad))), 0), [data]);
+
+  const alertas = useMemo(() => data.productos.map((p) => ({ p, stock: stockOf(p.id) })).filter((x) => x.stock <= x.p.umbralStockBajo).sort((a, b) => a.stock - b.stock), [data, stockOf]);
+
+  const monthAgg = useMemo(() => {
+    const acc = {};
+    data.transacciones.forEach((t) => {
+      const k = monthOf(t.fecha);
+      if (!acc[k]) acc[k] = { ingresos: 0, egresos: 0 };
+      acc[k][t.tipo === "ingreso" ? "ingresos" : "egresos"] += Number(t.monto);
+    });
+    return acc;
+  }, [data]);
+  function aggOf(k) { const a = monthAgg[k] || { ingresos: 0, egresos: 0 }; return { ingresos: a.ingresos, egresos: a.egresos, resultado: a.ingresos - a.egresos }; }
+
+  const endMonth = useMemo(() => {
+    const cur = monthOf(todayStr());
+    const maxData = Object.keys(monthAgg).reduce((mx, k) => (k > mx ? k : mx), cur);
+    return maxData > cur ? maxData : cur;
+  }, [monthAgg]);
+
+  const serie12 = useMemo(() => {
+    const arr = [];
+    for (let i = 11; i >= 0; i--) { const k = shiftMonth(endMonth, -i); const a = aggOf(k); arr.push({ key: k, mes: monthShort(k), Ingresos: a.ingresos, Egresos: a.egresos, Resultado: a.resultado }); }
+    return arr;
+  }, [endMonth, monthAgg]);
+
+  const historico = useMemo(() => Object.keys(monthAgg).sort((a, b) => (a < b ? 1 : -1)).map((k) => ({ key: k, ...aggOf(k) })), [monthAgg]);
+
+  const pieEgresos = useMemo(() => {
+    if (!selMonth) return [];
+    const acc = {};
+    data.transacciones.forEach((t) => { if (t.tipo === "egreso" && monthOf(t.fecha) === selMonth) acc[t.categoria] = (acc[t.categoria] || 0) + Number(t.monto); });
+    return Object.keys(acc).map((name) => ({ name, value: acc[name] })).sort((a, b) => b.value - a.value);
+  }, [data, selMonth]);
+
+  const txnFiltradas = useMemo(() => data.transacciones.filter((t) => {
+    if (fDesde && t.fecha < fDesde) return false;
+    if (fHasta && t.fecha > fHasta) return false;
+    if (fTipo !== "todos" && t.tipo !== fTipo) return false;
+    if (fCat !== "todas" && t.categoria !== fCat) return false;
+    if (fBusca && !((t.descripcion + " " + t.categoria).toLowerCase().includes(fBusca.toLowerCase()))) return false;
+    return true;
+  }).sort((a, b) => (a.fecha < b.fecha ? 1 : -1)), [data, fDesde, fHasta, fTipo, fCat, fBusca]);
+
+  /* ----- CRUD ----- */
+  function openTxn(tipo, txn) {
+    setModal({ kind: "transaccion", mode: txn ? "edit" : "add", id: txn ? txn.id : null,
+      form: txn
+        ? { fecha: txn.fecha, tipo: txn.tipo, monto: String(txn.monto), categoria: txn.categoria, descripcion: txn.descripcion, vinculados: txn.vinculados || [], descontar: false }
+        : { fecha: todayStr(), tipo: tipo || "egreso", monto: "", categoria: (tipo === "ingreso" ? CATS_INGRESO : CATS_EGRESO)[0], descripcion: "", vinculados: [], descontar: tipo === "ingreso" } });
+  }
+  function saveTxn() {
+    const f = modal.form; const monto = parseFloat(f.monto);
+    if (!f.fecha || !monto || monto <= 0) { ping("Completá fecha y un monto válido"); return; }
+    const vinc = (f.vinculados || []).filter((v) => v.productoId && Number(v.cantidad) > 0);
+    const reg = { id: modal.id || uid(), fecha: f.fecha, tipo: f.tipo, monto, categoria: f.categoria, descripcion: (f.descripcion || "").trim(), vinculados: vinc };
+    let nextTx, nextMov = data.movimientos;
+    if (modal.mode === "edit") { nextTx = data.transacciones.map((t) => (t.id === reg.id ? reg : t)); }
+    else {
+      nextTx = data.transacciones.concat([reg]);
+      if (f.tipo === "ingreso" && f.descontar && vinc.length) {
+        const movs = vinc.map((v) => ({ id: uid(), productoId: v.productoId, tipo: "salida", cantidad: Number(v.cantidad), fecha: f.fecha, motivo: "Venta", nota: reg.descripcion }));
+        nextMov = data.movimientos.concat(movs);
+      }
+    }
+    persist({ ...data, transacciones: nextTx, movimientos: nextMov });
+    setModal(null); ping(modal.mode === "edit" ? "Movimiento actualizado" : "Movimiento registrado");
+  }
+
+  function openProducto(p) {
+    setModal({ kind: "producto", mode: p ? "edit" : "add", id: p ? p.id : null,
+      form: p
+        ? { nombre: p.nombre, categoria: p.categoria, sku: p.sku || "", precioVenta: String(p.precioVenta), costoProduccion: String(p.costoProduccion), umbralStockBajo: String(p.umbralStockBajo) }
+        : { nombre: "", categoria: CAT_PRODUCTO[0], sku: "", precioVenta: "", costoProduccion: "", umbralStockBajo: "3" } });
+  }
+  function saveProducto() {
+    const f = modal.form;
+    if (!(f.nombre || "").trim()) { ping("Poné un nombre al producto"); return; }
+    const reg = { id: modal.id || uid(), nombre: f.nombre.trim(), categoria: f.categoria, sku: (f.sku || "").trim(), precioVenta: parseFloat(f.precioVenta) || 0, costoProduccion: parseFloat(f.costoProduccion) || 0, umbralStockBajo: parseInt(f.umbralStockBajo) || 0 };
+    const next = modal.mode === "edit" ? data.productos.map((p) => (p.id === reg.id ? reg : p)) : data.productos.concat([reg]);
+    persist({ ...data, productos: next }); setModal(null); ping(modal.mode === "edit" ? "Producto actualizado" : "Producto agregado");
+  }
+
+  function openMov(p) {
+    setModal({ kind: "movimiento", mode: "add",
+      form: { productoId: p ? p.id : (data.productos[0] ? data.productos[0].id : ""), tipo: "entrada", cantidad: "", motivo: "Producción", fecha: todayStr(), nota: "" } });
+  }
+  function saveMov() {
+    const f = modal.form; const cant = parseInt(f.cantidad);
+    if (!f.productoId || !cant || cant <= 0) { ping("Elegí producto y una cantidad válida"); return; }
+    const reg = { id: uid(), productoId: f.productoId, tipo: f.tipo, cantidad: cant, fecha: f.fecha, motivo: f.motivo, nota: (f.nota || "").trim() };
+    persist({ ...data, movimientos: data.movimientos.concat([reg]) }); setModal(null); ping("Movimiento de stock registrado");
+  }
+
+  function askDelete(title, message, fn) { setModal({ kind: "confirm", title, message, onConfirm: fn }); }
+  function deleteTxn(id) { askDelete("Eliminar movimiento", "Se borrará este ingreso/egreso. Esta acción no se puede deshacer.", () => { persist({ ...data, transacciones: data.transacciones.filter((t) => t.id !== id) }); setModal(null); ping("Movimiento eliminado"); }); }
+  function deleteProducto(id) { askDelete("Eliminar producto", "Se borrará el producto y todos sus movimientos de stock.", () => { persist({ ...data, productos: data.productos.filter((p) => p.id !== id), movimientos: data.movimientos.filter((m) => m.productoId !== id) }); setModal(null); ping("Producto eliminado"); }); }
+
+  /* ----- export / import ----- */
+  function download(filename, text) {
+    const blob = new Blob(["\uFEFF" + text], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+  }
+  function csvCell(v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }
+  function exportTxnCSV() {
+    const rows = [["Fecha", "Tipo", "Categoria", "Descripcion", "Monto"]];
+    data.transacciones.slice().sort((a, b) => (a.fecha < b.fecha ? -1 : 1)).forEach((t) => rows.push([t.fecha, t.tipo, t.categoria, t.descripcion, t.monto]));
+    download("timbo-transacciones.csv", rows.map((r) => r.map(csvCell).join(";")).join("\n")); ping("CSV de transacciones exportado");
+  }
+  function exportStockCSV() {
+    const rows = [["Producto", "Categoria", "SKU", "Stock", "PrecioVenta", "CostoProduccion", "Margen"]];
+    data.productos.forEach((p) => rows.push([p.nombre, p.categoria, p.sku, stockOf(p.id), p.precioVenta, p.costoProduccion, p.precioVenta - p.costoProduccion]));
+    download("timbo-stock.csv", rows.map((r) => r.map(csvCell).join(";")).join("\n")); ping("CSV de stock exportado");
+  }
+  function exportBackup() { download("timbo-respaldo.json", JSON.stringify(data, null, 2)); ping("Respaldo exportado"); }
+  function importBackup(e) {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const obj = JSON.parse(reader.result);
+        if (!obj.productos || !obj.transacciones || !obj.movimientos) throw new Error("formato");
+        askDelete("Importar respaldo", "Vas a reemplazar todos los datos actuales por los del archivo. ¿Seguro?", () => { persist(obj); setModal(null); ping("Datos importados"); });
+      } catch (err) { ping("Archivo de respaldo inválido"); }
+    };
+    reader.readAsText(file); e.target.value = "";
+  }
+
+  const NAV = [
+    { key: "dashboard", label: "Inicio", icon: "dashboard" },
+    { key: "reportes", label: "Reportes", icon: "report" },
+    { key: "transacciones", label: "Transacciones", icon: "swap" },
+    { key: "stock", label: "Stock", icon: "box" },
+    { key: "productos", label: "Productos", icon: "tag" },
+  ];
+
+  if (!selMonth) return <div className="timbo-app" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>Cargando…</div>;
+
+  const mAgg = aggOf(selMonth);
+  const prevAgg = aggOf(shiftMonth(selMonth, -1));
+  const delta = mAgg.resultado - prevAgg.resultado;
+  const hasPrev = monthAgg[shiftMonth(selMonth, -1)] != null;
+
+  const MonthNav = () => (
+    <div className="t-month-nav">
+      <button className="t-icon-btn" style={{ border: "none", background: "none" }} onClick={() => setSelMonth(shiftMonth(selMonth, -1))} aria-label="Mes anterior"><Ic name="chevL" /></button>
+      <span className="lbl">{monthLabel(selMonth)}</span>
+      <button className="t-icon-btn" style={{ border: "none", background: "none" }} onClick={() => setSelMonth(shiftMonth(selMonth, 1))} aria-label="Mes siguiente"><Ic name="chevR" /></button>
+    </div>
+  );
+
+  function renderDashboard() {
+    const positivo = mAgg.resultado >= 0;
+    const last5 = data.transacciones.slice().sort((a, b) => (a.fecha < b.fecha ? 1 : -1)).slice(0, 5);
+    return (
+      <div className="stack-lg">
+        <div className="t-page-head">
+          <div><h1 className="t-page-title">Resumen del negocio</h1><p className="t-page-sub">Cómo viene el mes de un vistazo</p></div>
+          <MonthNav />
+        </div>
+
+        <div className="t-hero">
+          <div className="t-hero-eyebrow">Resultado de {monthLabel(selMonth)}</div>
+          <div className="t-hero-num t-serif t-num" style={{ color: positivo ? "var(--green)" : "var(--red)" }}>{formatSigned(mAgg.resultado)}</div>
+          <div className="t-hero-verdict" style={{ color: positivo ? "var(--green)" : "var(--red)" }}>
+            {positivo ? "Mes en ganancia" : "Mes en pérdida"}
+            {hasPrev && <span style={{ color: "var(--muted)", fontWeight: 500, marginLeft: 8 }}>{delta >= 0 ? "▲" : "▼"} {formatARS(Math.abs(delta))} vs {monthLabel(shiftMonth(selMonth, -1))}</span>}
+          </div>
+          <div className="t-hero-split">
+            <div className="t-hero-stat"><div className="k">Ingresos</div><div className="v" style={{ color: "var(--green)" }}><Ic name="up" size={18} /> {formatARS(mAgg.ingresos)}</div></div>
+            <div className="t-hero-stat"><div className="k">Egresos</div><div className="v" style={{ color: "var(--red)" }}><Ic name="down" size={18} /> {formatARS(mAgg.egresos)}</div></div>
+          </div>
+        </div>
+
+        <div className="t-row t-wrap">
+          <button className="t-btn t-btn-primary" onClick={() => openTxn("ingreso")}><Ic name="plus" size={16} /> Registrar venta</button>
+          <button className="t-btn" onClick={() => openTxn("egreso")}><Ic name="plus" size={16} /> Registrar gasto</button>
+          <button className="t-btn" onClick={() => openMov()}><Ic name="box" size={16} /> Movimiento de stock</button>
+          <button className="t-btn" onClick={() => openProducto()}><Ic name="tag" size={16} /> Agregar producto</button>
+        </div>
+
+        {alertas.length > 0 && (
+          <div className="t-alert">
+            <Ic name="alert" size={20} />
+            <div><strong>Stock para revisar.</strong> {alertas.map((a, i) => <span key={a.p.id}>{a.p.nombre} ({a.stock <= 0 ? "sin stock" : a.stock + " u."}){i < alertas.length - 1 ? " · " : ""}</span>)}</div>
+          </div>
+        )}
+
+        <div className="t-grid-2">
+          <div className="t-card">
+            <div className="t-card-title">Ingresos vs egresos · últimos 12 meses</div>
+            <div className="t-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={serie12} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EADFCD" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#897A69" }} tickLine={false} axisLine={{ stroke: "#E7DCCB" }} />
+                  <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: "#897A69" }} tickLine={false} axisLine={false} width={52} />
+                  <Tooltip formatter={(v, n) => [formatARS(v), n]} contentStyle={{ borderRadius: 10, border: "1px solid #E7DCCB", fontSize: 13 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Ingresos" fill="#2E7A52" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Egresos" fill="#B23A48" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="t-card">
+            <div className="t-card-title">Resultado neto mensual</div>
+            <div className="t-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={serie12} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EADFCD" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#897A69" }} tickLine={false} axisLine={{ stroke: "#E7DCCB" }} />
+                  <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: "#897A69" }} tickLine={false} axisLine={false} width={52} />
+                  <Tooltip formatter={(v) => [formatARS(v), "Resultado"]} contentStyle={{ borderRadius: 10, border: "1px solid #E7DCCB", fontSize: 13 }} />
+                  <ReferenceLine y={0} stroke="#C9B89E" />
+                  <Line type="monotone" dataKey="Resultado" stroke="#8F5728" strokeWidth={2.5} dot={{ r: 3, fill: "#8F5728" }} activeDot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        <div className="t-grid-2">
+          <div className="t-card">
+            <div className="t-card-title">Egresos por categoría · {monthLabel(selMonth)}</div>
+            {pieEgresos.length === 0 ? <div className="t-empty">No hay egresos cargados este mes.</div> : (
+              <div className="t-chart">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={pieEgresos} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={92} innerRadius={48} paddingAngle={2}>
+                      {pieEgresos.map((e, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v, n) => [formatARS(v), n]} contentStyle={{ borderRadius: 10, border: "1px solid #E7DCCB", fontSize: 13 }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+          <div className="t-card">
+            <div className="t-card-title">Últimos movimientos</div>
+            {last5.length === 0 ? <div className="t-empty">Todavía no cargaste movimientos.</div> : (
+              <div className="stack-sm">
+                {last5.map((t) => (
+                  <div key={t.id} className="t-row" style={{ justifyContent: "space-between", padding: "8px 2px", borderBottom: "1px solid var(--line)" }}>
+                    <div><div style={{ fontWeight: 600, fontSize: 14 }}>{t.descripcion || t.categoria}</div><div style={{ fontSize: 12.5, color: "var(--muted)" }}>{t.fecha} · {t.categoria}</div></div>
+                    <div className="t-num" style={{ fontWeight: 600, color: t.tipo === "ingreso" ? "var(--green)" : "var(--red)" }}>{t.tipo === "ingreso" ? "+ " : "- "}{formatARS(t.monto)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderReportes() {
+    const anio = selMonth.slice(0, 4);
+    const tot = historico.filter((h) => h.key.startsWith(anio)).reduce((a, h) => ({ ingresos: a.ingresos + h.ingresos, egresos: a.egresos + h.egresos }), { ingresos: 0, egresos: 0 });
+    const resA = tot.ingresos - tot.egresos;
+    return (
+      <div className="stack-lg">
+        <div className="t-page-head"><div><h1 className="t-page-title">Reportes mensuales</h1><p className="t-page-sub">Ganancia o pérdida mes a mes</p></div></div>
+        <div className="t-grid-3">
+          <div className="t-card t-kpi"><div className="k">Ingresos {anio}</div><div className="v t-num" style={{ color: "var(--green)" }}>{formatARS(tot.ingresos)}</div></div>
+          <div className="t-card t-kpi"><div className="k">Egresos {anio}</div><div className="v t-num" style={{ color: "var(--red)" }}>{formatARS(tot.egresos)}</div></div>
+          <div className="t-card t-kpi"><div className="k">Resultado {anio}</div><div className="v t-num" style={{ color: resA >= 0 ? "var(--green)" : "var(--red)" }}>{formatSigned(resA)}</div></div>
+        </div>
+        <div className="t-card">
+          <div className="t-card-title">Detalle por mes</div>
+          <div className="t-table-wrap">
+            <table className="t-table">
+              <thead><tr><th>Mes</th><th className="t-right">Ingresos</th><th className="t-right">Egresos</th><th className="t-right">Resultado</th><th>Estado</th></tr></thead>
+              <tbody>
+                {historico.length === 0 && <tr><td colSpan={5}><div className="t-empty">Sin datos todavía.</div></td></tr>}
+                {historico.map((h) => (
+                  <tr key={h.key} style={{ cursor: "pointer" }} onClick={() => { setSelMonth(h.key); setView("dashboard"); }}>
+                    <td style={{ fontWeight: 600 }}>{monthLabel(h.key)}</td>
+                    <td className="t-right t-num">{formatARS(h.ingresos)}</td>
+                    <td className="t-right t-num">{formatARS(h.egresos)}</td>
+                    <td className="t-right t-num" style={{ fontWeight: 700, color: h.resultado >= 0 ? "var(--green)" : "var(--red)" }}>{formatSigned(h.resultado)}</td>
+                    <td><span className={"t-pill " + (h.resultado >= 0 ? "t-pill-green" : "t-pill-red")}>{h.resultado >= 0 ? "Ganancia" : "Pérdida"}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="t-card">
+          <div className="t-card-title">Evolución del resultado neto</div>
+          <div className="t-chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={serie12} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#EADFCD" vertical={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#897A69" }} tickLine={false} axisLine={{ stroke: "#E7DCCB" }} />
+                <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: "#897A69" }} tickLine={false} axisLine={false} width={52} />
+                <Tooltip formatter={(v) => [formatARS(v), "Resultado"]} contentStyle={{ borderRadius: 10, border: "1px solid #E7DCCB", fontSize: 13 }} />
+                <ReferenceLine y={0} stroke="#C9B89E" />
+                <Line type="monotone" dataKey="Resultado" stroke="#8F5728" strokeWidth={2.5} dot={{ r: 3, fill: "#8F5728" }} activeDot={{ r: 5 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderTransacciones() {
+    const catOpts = fTipo === "ingreso" ? CATS_INGRESO : fTipo === "egreso" ? CATS_EGRESO : CATS_INGRESO.concat(CATS_EGRESO);
+    return (
+      <div className="stack-lg">
+        <div className="t-page-head">
+          <div><h1 className="t-page-title">Transacciones</h1><p className="t-page-sub">Ingresos y egresos con fecha</p></div>
+          <div className="t-row t-wrap">
+            <button className="t-btn" onClick={exportTxnCSV}><Ic name="dl" size={16} /> Exportar CSV</button>
+            <button className="t-btn" onClick={() => openTxn("egreso")}><Ic name="plus" size={16} /> Gasto</button>
+            <button className="t-btn t-btn-primary" onClick={() => openTxn("ingreso")}><Ic name="plus" size={16} /> Venta</button>
+          </div>
+        </div>
+        <div className="t-card flat">
+          <div className="t-grid-3" style={{ gap: 12 }}>
+            <div className="t-field"><label className="t-label">Desde</label><input type="date" className="t-input" value={fDesde} onChange={(e) => setFDesde(e.target.value)} /></div>
+            <div className="t-field"><label className="t-label">Hasta</label><input type="date" className="t-input" value={fHasta} onChange={(e) => setFHasta(e.target.value)} /></div>
+            <div className="t-field"><label className="t-label">Tipo</label><select className="t-select" value={fTipo} onChange={(e) => { setFTipo(e.target.value); setFCat("todas"); }}><option value="todos">Todos</option><option value="ingreso">Ingresos</option><option value="egreso">Egresos</option></select></div>
+            <div className="t-field"><label className="t-label">Categoría</label><select className="t-select" value={fCat} onChange={(e) => setFCat(e.target.value)}><option value="todas">Todas</option>{catOpts.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+            <div className="t-field" style={{ gridColumn: "span 2" }}><label className="t-label">Buscar</label>
+              <div style={{ position: "relative" }}><span style={{ position: "absolute", left: 11, top: 11, color: "var(--muted)" }}><Ic name="search" size={15} /></span>
+                <input className="t-input" style={{ paddingLeft: 32 }} placeholder="Descripción o categoría" value={fBusca} onChange={(e) => setFBusca(e.target.value)} /></div>
+            </div>
+          </div>
+        </div>
+        <div className="t-card">
+          <div className="t-table-wrap">
+            <table className="t-table">
+              <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th className="t-right">Monto</th><th></th></tr></thead>
+              <tbody>
+                {txnFiltradas.length === 0 && <tr><td colSpan={6}><div className="t-empty">No hay movimientos con estos filtros.</div></td></tr>}
+                {txnFiltradas.map((t) => (
+                  <tr key={t.id}>
+                    <td className="t-num">{t.fecha}</td>
+                    <td><span className={"t-pill " + (t.tipo === "ingreso" ? "t-pill-green" : "t-pill-red")}>{t.tipo === "ingreso" ? "Ingreso" : "Egreso"}</span></td>
+                    <td>{t.categoria}</td>
+                    <td>{t.descripcion || <span style={{ color: "var(--muted)" }}>—</span>}</td>
+                    <td className="t-right t-num" style={{ fontWeight: 600, color: t.tipo === "ingreso" ? "var(--green)" : "var(--red)" }}>{t.tipo === "ingreso" ? "+ " : "- "}{formatARS(t.monto)}</td>
+                    <td><div className="t-row" style={{ justifyContent: "flex-end", gap: 6 }}><button className="t-icon-btn" onClick={() => openTxn(t.tipo, t)}><Ic name="edit" size={15} /></button><button className="t-icon-btn danger" onClick={() => deleteTxn(t.id)}><Ic name="trash" size={15} /></button></div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderStock() {
+    const lista = data.productos.map((p) => ({ ...p, stock: stockOf(p.id), margen: p.precioVenta - p.costoProduccion })).filter((p) => catFiltro === "todas" || p.categoria === catFiltro).sort((a, b) => a.stock - b.stock);
+    const movs = data.movimientos.slice().sort((a, b) => (a.fecha < b.fecha ? 1 : -1)).slice(0, 12);
+    const nombreProd = (id) => { const p = data.productos.find((x) => x.id === id); return p ? p.nombre : "Producto eliminado"; };
+    return (
+      <div className="stack-lg">
+        <div className="t-page-head">
+          <div><h1 className="t-page-title">Stock e inventario</h1><p className="t-page-sub">Qué hay disponible ahora</p></div>
+          <div className="t-row t-wrap"><button className="t-btn" onClick={exportStockCSV}><Ic name="dl" size={16} /> Exportar CSV</button><button className="t-btn t-btn-primary" onClick={() => openMov()}><Ic name="plus" size={16} /> Movimiento</button></div>
+        </div>
+        {alertas.length > 0 && <div className="t-alert"><Ic name="alert" size={20} /><div><strong>{alertas.length} producto{alertas.length > 1 ? "s" : ""} con stock bajo o agotado.</strong> Conviene reponer antes de empujar ventas.</div></div>}
+        <div className="t-row">
+          <div className="t-field" style={{ maxWidth: 220 }}><label className="t-label">Categoría</label><select className="t-select" value={catFiltro} onChange={(e) => setCatFiltro(e.target.value)}><option value="todas">Todas</option>{CAT_PRODUCTO.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+        </div>
+        <div className="t-card">
+          <div className="t-table-wrap">
+            <table className="t-table">
+              <thead><tr><th>Producto</th><th>Categoría</th><th className="t-right">Stock</th><th>Estado</th><th className="t-right">Precio</th><th className="t-right">Costo</th><th className="t-right">Margen</th><th></th></tr></thead>
+              <tbody>
+                {lista.length === 0 && <tr><td colSpan={8}><div className="t-empty">No hay productos en esta categoría.</div></td></tr>}
+                {lista.map((p) => {
+                  const estado = p.stock <= 0 ? "agotado" : p.stock <= p.umbralStockBajo ? "bajo" : "ok";
+                  return (
+                    <tr key={p.id}>
+                      <td style={{ fontWeight: 600 }}>{p.nombre}{p.sku && <span style={{ color: "var(--muted)", fontWeight: 400, fontSize: 12.5 }}> · {p.sku}</span>}</td>
+                      <td>{p.categoria}</td>
+                      <td className="t-right t-num" style={{ fontWeight: 700 }}>{p.stock}</td>
+                      <td><span className={"t-pill " + (estado === "ok" ? "t-pill-green" : estado === "bajo" ? "t-pill-warn" : "t-pill-red")}>{estado === "ok" ? "Disponible" : estado === "bajo" ? "Stock bajo" : "Agotado"}</span></td>
+                      <td className="t-right t-num">{formatARS(p.precioVenta)}</td>
+                      <td className="t-right t-num" style={{ color: "var(--muted)" }}>{formatARS(p.costoProduccion)}</td>
+                      <td className="t-right t-num" style={{ fontWeight: 600 }}>{formatARS(p.margen)}</td>
+                      <td><div className="t-row" style={{ justifyContent: "flex-end" }}><button className="t-btn t-btn-sm" onClick={() => openMov(p)}>Mover</button></div></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="t-card">
+          <div className="t-card-title">Movimientos recientes</div>
+          <div className="t-table-wrap">
+            <table className="t-table">
+              <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Motivo</th><th className="t-right">Cantidad</th></tr></thead>
+              <tbody>
+                {movs.length === 0 && <tr><td colSpan={5}><div className="t-empty">Sin movimientos.</div></td></tr>}
+                {movs.map((m) => (
+                  <tr key={m.id}>
+                    <td className="t-num">{m.fecha}</td>
+                    <td>{nombreProd(m.productoId)}</td>
+                    <td><span className={"t-pill " + (m.tipo === "entrada" ? "t-pill-green" : "t-pill-neutral")}>{m.tipo === "entrada" ? "Entrada" : "Salida"}</span></td>
+                    <td>{m.motivo}{m.nota ? <span style={{ color: "var(--muted)" }}> · {m.nota}</span> : ""}</td>
+                    <td className="t-right t-num" style={{ fontWeight: 600 }}>{m.tipo === "entrada" ? "+" : "-"}{m.cantidad}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderProductos() {
+    const lista = data.productos.map((p) => ({ ...p, stock: stockOf(p.id), margen: p.precioVenta - p.costoProduccion, margenPct: p.precioVenta ? ((p.precioVenta - p.costoProduccion) / p.precioVenta) * 100 : 0 }));
+    return (
+      <div className="stack-lg">
+        <div className="t-page-head"><div><h1 className="t-page-title">Productos</h1><p className="t-page-sub">Catálogo, precios y márgenes</p></div><button className="t-btn t-btn-primary" onClick={() => openProducto()}><Ic name="plus" size={16} /> Agregar producto</button></div>
+        <div className="t-card">
+          <div className="t-table-wrap">
+            <table className="t-table">
+              <thead><tr><th>Producto</th><th>Categoría</th><th className="t-right">Precio</th><th className="t-right">Costo</th><th className="t-right">Margen</th><th className="t-right">Margen %</th><th className="t-right">Stock</th><th></th></tr></thead>
+              <tbody>
+                {lista.length === 0 && <tr><td colSpan={8}><div className="t-empty">Todavía no cargaste productos.</div></td></tr>}
+                {lista.map((p) => (
+                  <tr key={p.id}>
+                    <td style={{ fontWeight: 600 }}>{p.nombre}{p.sku && <span style={{ color: "var(--muted)", fontWeight: 400, fontSize: 12.5 }}> · {p.sku}</span>}</td>
+                    <td>{p.categoria}</td>
+                    <td className="t-right t-num">{formatARS(p.precioVenta)}</td>
+                    <td className="t-right t-num" style={{ color: "var(--muted)" }}>{formatARS(p.costoProduccion)}</td>
+                    <td className="t-right t-num" style={{ fontWeight: 600 }}>{formatARS(p.margen)}</td>
+                    <td className="t-right t-num"><span className={"t-pill " + (p.margenPct >= 40 ? "t-pill-green" : p.margenPct >= 20 ? "t-pill-warn" : "t-pill-red")}>{p.margenPct.toFixed(0)}%</span></td>
+                    <td className="t-right t-num">{p.stock}</td>
+                    <td><div className="t-row" style={{ justifyContent: "flex-end", gap: 6 }}><button className="t-icon-btn" onClick={() => openProducto(p)}><Ic name="edit" size={15} /></button><button className="t-icon-btn danger" onClick={() => deleteProducto(p.id)}><Ic name="trash" size={15} /></button></div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function setForm(patch) { setModal((m) => ({ ...m, form: { ...m.form, ...patch } })); }
+
+  function renderModal() {
+    if (!modal) return null;
+    if (modal.kind === "confirm") {
+      return (
+        <div className="t-overlay" onClick={() => setModal(null)}>
+          <div className="t-modal sm" onClick={(e) => e.stopPropagation()}>
+            <div className="t-modal-head"><div className="t-modal-title">{modal.title}</div><button className="t-icon-btn" onClick={() => setModal(null)}><Ic name="x" size={16} /></button></div>
+            <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 20 }}>{modal.message}</p>
+            <div className="t-row" style={{ justifyContent: "flex-end" }}><button className="t-btn" onClick={() => setModal(null)}>Cancelar</button><button className="t-btn t-btn-danger" onClick={modal.onConfirm}>Eliminar</button></div>
+          </div>
+        </div>
+      );
+    }
+    if (modal.kind === "transaccion") {
+      const f = modal.form; const cats = f.tipo === "ingreso" ? CATS_INGRESO : CATS_EGRESO;
+      return (
+        <div className="t-overlay" onClick={() => setModal(null)}>
+          <div className="t-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="t-modal-head"><div className="t-modal-title">{modal.mode === "edit" ? "Editar movimiento" : "Nuevo movimiento"}</div><button className="t-icon-btn" onClick={() => setModal(null)}><Ic name="x" size={16} /></button></div>
+            <div className="stack-md">
+              <div className="t-toggle">
+                <button className={f.tipo === "ingreso" ? "on-in" : ""} onClick={() => setForm({ tipo: "ingreso", categoria: CATS_INGRESO[0] })}>Ingreso</button>
+                <button className={f.tipo === "egreso" ? "on-eg" : ""} onClick={() => setForm({ tipo: "egreso", categoria: CATS_EGRESO[0] })}>Egreso</button>
+              </div>
+              <div className="t-grid-2" style={{ gap: 12 }}>
+                <div className="t-field"><label className="t-label">Fecha</label><input type="date" className="t-input" value={f.fecha} onChange={(e) => setForm({ fecha: e.target.value })} /></div>
+                <div className="t-field"><label className="t-label">Monto (ARS)</label><input type="number" min="0" inputMode="decimal" className="t-input" placeholder="0" value={f.monto} onChange={(e) => setForm({ monto: e.target.value })} /></div>
+              </div>
+              <div className="t-field"><label className="t-label">Categoría</label><select className="t-select" value={f.categoria} onChange={(e) => setForm({ categoria: e.target.value })}>{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+              <div className="t-field"><label className="t-label">Descripción</label><input className="t-input" placeholder="Ej: 2 Materas Chocolate" value={f.descripcion} onChange={(e) => setForm({ descripcion: e.target.value })} /></div>
+              {f.tipo === "ingreso" && modal.mode === "add" && (
+                <div className="t-card flat" style={{ padding: 14 }}>
+                  <label className="t-row" style={{ gap: 8, cursor: "pointer", fontSize: 14, fontWeight: 600 }}><input type="checkbox" checked={f.descontar} onChange={(e) => setForm({ descontar: e.target.checked })} /> Descontar del stock al guardar</label>
+                  {f.descontar && (
+                    <div className="stack-sm" style={{ marginTop: 12 }}>
+                      {(f.vinculados || []).map((v, i) => (
+                        <div className="t-row" key={i} style={{ gap: 8 }}>
+                          <select className="t-select" value={v.productoId} onChange={(e) => { const arr = f.vinculados.slice(); arr[i] = { ...arr[i], productoId: e.target.value }; setForm({ vinculados: arr }); }}>
+                            <option value="">Elegí producto…</option>{data.productos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                          </select>
+                          <input type="number" min="1" className="t-input" style={{ maxWidth: 90 }} placeholder="Cant." value={v.cantidad} onChange={(e) => { const arr = f.vinculados.slice(); arr[i] = { ...arr[i], cantidad: e.target.value }; setForm({ vinculados: arr }); }} />
+                          <button className="t-icon-btn danger" onClick={() => setForm({ vinculados: f.vinculados.filter((_, j) => j !== i) })}><Ic name="x" size={15} /></button>
+                        </div>
+                      ))}
+                      <button className="t-btn t-btn-sm" onClick={() => setForm({ vinculados: (f.vinculados || []).concat([{ productoId: "", cantidad: "" }]) })}><Ic name="plus" size={14} /> Agregar producto</button>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="t-row" style={{ justifyContent: "flex-end" }}><button className="t-btn" onClick={() => setModal(null)}>Cancelar</button><button className="t-btn t-btn-primary" onClick={saveTxn}><Ic name="check" size={16} /> Guardar</button></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (modal.kind === "producto") {
+      const f = modal.form; const margen = (parseFloat(f.precioVenta) || 0) - (parseFloat(f.costoProduccion) || 0); const pct = parseFloat(f.precioVenta) ? (margen / parseFloat(f.precioVenta)) * 100 : 0;
+      return (
+        <div className="t-overlay" onClick={() => setModal(null)}>
+          <div className="t-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="t-modal-head"><div className="t-modal-title">{modal.mode === "edit" ? "Editar producto" : "Nuevo producto"}</div><button className="t-icon-btn" onClick={() => setModal(null)}><Ic name="x" size={16} /></button></div>
+            <div className="stack-md">
+              <div className="t-field"><label className="t-label">Nombre</label><input className="t-input" placeholder="Ej: Matera Timbó Chocolate" value={f.nombre} onChange={(e) => setForm({ nombre: e.target.value })} /></div>
+              <div className="t-grid-2" style={{ gap: 12 }}>
+                <div className="t-field"><label className="t-label">Categoría</label><select className="t-select" value={f.categoria} onChange={(e) => setForm({ categoria: e.target.value })}>{CAT_PRODUCTO.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+                <div className="t-field"><label className="t-label">SKU / código</label><input className="t-input" placeholder="opcional" value={f.sku} onChange={(e) => setForm({ sku: e.target.value })} /></div>
+              </div>
+              <div className="t-grid-2" style={{ gap: 12 }}>
+                <div className="t-field"><label className="t-label">Precio de venta</label><input type="number" min="0" className="t-input" placeholder="0" value={f.precioVenta} onChange={(e) => setForm({ precioVenta: e.target.value })} /></div>
+                <div className="t-field"><label className="t-label">Costo de producción</label><input type="number" min="0" className="t-input" placeholder="0" value={f.costoProduccion} onChange={(e) => setForm({ costoProduccion: e.target.value })} /></div>
+              </div>
+              <div className="t-field"><label className="t-label">Umbral de stock bajo</label><input type="number" min="0" className="t-input" value={f.umbralStockBajo} onChange={(e) => setForm({ umbralStockBajo: e.target.value })} /></div>
+              <div className="t-card flat" style={{ padding: 14 }}><div className="t-row" style={{ justifyContent: "space-between" }}><span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>Margen unitario</span><span className="t-num" style={{ fontWeight: 700, color: margen >= 0 ? "var(--green)" : "var(--red)" }}>{formatARS(margen)} · {pct.toFixed(0)}%</span></div></div>
+              <div className="t-row" style={{ justifyContent: "flex-end" }}><button className="t-btn" onClick={() => setModal(null)}>Cancelar</button><button className="t-btn t-btn-primary" onClick={saveProducto}><Ic name="check" size={16} /> Guardar</button></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (modal.kind === "movimiento") {
+      const f = modal.form;
+      return (
+        <div className="t-overlay" onClick={() => setModal(null)}>
+          <div className="t-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="t-modal-head"><div className="t-modal-title">Movimiento de stock</div><button className="t-icon-btn" onClick={() => setModal(null)}><Ic name="x" size={16} /></button></div>
+            <div className="stack-md">
+              <div className="t-field"><label className="t-label">Producto</label><select className="t-select" value={f.productoId} onChange={(e) => setForm({ productoId: e.target.value })}>{data.productos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select></div>
+              <div className="t-grid-2" style={{ gap: 12 }}>
+                <div className="t-field"><label className="t-label">Tipo</label><select className="t-select" value={f.tipo} onChange={(e) => setForm({ tipo: e.target.value, motivo: MOTIVOS_MOV[e.target.value][0] })}><option value="entrada">Entrada (suma stock)</option><option value="salida">Salida (resta stock)</option></select></div>
+                <div className="t-field"><label className="t-label">Cantidad</label><input type="number" min="1" className="t-input" placeholder="0" value={f.cantidad} onChange={(e) => setForm({ cantidad: e.target.value })} /></div>
+              </div>
+              <div className="t-grid-2" style={{ gap: 12 }}>
+                <div className="t-field"><label className="t-label">Motivo</label><select className="t-select" value={f.motivo} onChange={(e) => setForm({ motivo: e.target.value })}>{MOTIVOS_MOV[f.tipo].map((mo) => <option key={mo} value={mo}>{mo}</option>)}</select></div>
+                <div className="t-field"><label className="t-label">Fecha</label><input type="date" className="t-input" value={f.fecha} onChange={(e) => setForm({ fecha: e.target.value })} /></div>
+              </div>
+              <div className="t-field"><label className="t-label">Nota</label><input className="t-input" placeholder="opcional" value={f.nota} onChange={(e) => setForm({ nota: e.target.value })} /></div>
+              <div className="t-row" style={{ justifyContent: "flex-end" }}><button className="t-btn" onClick={() => setModal(null)}>Cancelar</button><button className="t-btn t-btn-primary" onClick={saveMov}><Ic name="check" size={16} /> Guardar</button></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  const viewMap = { dashboard: renderDashboard, reportes: renderReportes, transacciones: renderTransacciones, stock: renderStock, productos: renderProductos };
+
+  return (
+    <div className="timbo-app">
+      <div className="t-shell">
+        <aside className="t-sidebar">
+          <div className="t-brand"><span className="t-brand-name t-serif">Timbó</span><span className="t-brand-sub">Gestión</span></div>
+          <nav className="t-nav">
+            {NAV.map((n) => <button key={n.key} className={"t-nav-item" + (view === n.key ? " active" : "")} onClick={() => setView(n.key)}><Ic name={n.icon} size={18} /> {n.label}</button>)}
+          </nav>
+          <div className="t-side-foot">
+            <button className="t-nav-item" onClick={exportBackup}><Ic name="dl" size={16} /> Exportar respaldo</button>
+            <label className="t-nav-item" style={{ cursor: "pointer" }}><Ic name="ul" size={16} /> Importar respaldo<input type="file" accept="application/json" style={{ display: "none" }} onChange={importBackup} /></label>
+          </div>
+        </aside>
+        <main className="t-main">
+          <header className="t-topbar"><span className="t-brand-name t-serif">Timbó</span><button className="t-btn t-btn-primary t-btn-sm" onClick={() => openTxn(view === "transacciones" ? "egreso" : "ingreso")}><Ic name="plus" size={15} /> Cargar</button></header>
+          <div className="t-content">{viewMap[view]()}</div>
+        </main>
+      </div>
+      <nav className="t-bottomnav">
+        {NAV.map((n) => <button key={n.key} className={view === n.key ? "active" : ""} onClick={() => setView(n.key)}><Ic name={n.icon} size={20} /> {n.label}</button>)}
+      </nav>
+      {renderModal()}
+      {toast && <div className="t-toast"><Ic name="check" size={16} /> {toast}</div>}
+    </div>
+  );
+}
+
+const boot = document.getElementById("boot");
+if (boot) boot.style.display = "none";
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
